@@ -34,7 +34,7 @@ if exist "%BUILD_DIR%" rmdir /s /q "%BUILD_DIR%"
 mkdir "%BUILD_DIR%" && cd /d "%BUILD_DIR%"
 
 :: configure (构建 shared 且同时包含 Debug 和 Release)
-call %SRC_QT%\configure.bat -shared -debug-and-release -G "Ninja Multi-Config" -prefix %INSTALL_DIR% -nomake examples -nomake tests -skip qtwebengine -opensource -confirm-license -qt-libpng -qt-libjpeg -qt-zlib -qt-pcre -qt-freetype -qt-harfbuzz -qt-webp -qt-tiff -schannel -opengl desktop -platform win32-msvc
+call %SRC_QT%\configure.bat -shared -debug-and-release -prefix %INSTALL_DIR% -nomake examples -nomake tests -skip qtwebengine -opensource -confirm-license -qt-libpng -qt-libjpeg -qt-zlib -qt-pcre -qt-freetype -qt-harfbuzz -qt-webp -qt-tiff -schannel -opengl desktop -platform win32-msvc
 
 :: 分别编译 Release 和 Debug
 cmake --build . --config Release --parallel
