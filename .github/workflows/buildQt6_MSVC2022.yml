@@ -1,11 +1,11 @@
-name: build_Qt6.9.0_msvc2022
+name: build_Qt6.12.0_msvc2022
 
 on: workflow_dispatch
 #on: [push, pull_request]
 
 env:
-  QT_VERSION: 6.9.0
-  QT_VERSION2: 6.9
+  QT_VERSION: 6.12.0
+  QT_VERSION2: 6.12
   FILE_NAME: shared-Debug-Release_msvc2022_64
 
 jobs:
@@ -17,52 +17,52 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 安装python
+    # 安装python (Qt构建需要)
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
         architecture: 'x64'
 
-    # 安装msvc
+    # 安装msvc环境 (虽然自带，显式调用更稳妥)
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
       with:
         msbuild-architecture: x64
 
-    # 安装vsdevenv
     - name: Setup vsdevenv
       uses: seanmiddleditch/gha-setup-vsdevenv@master
 
     # 构建Qt
     - name: Build Qt
+      shell: bash # 关键：使用 bash 运行 mkdir 和 unzip
       run: |
-        #ls     #Directory: D:\a\buildQt\buildQt(即仓库目录)
-        #D:\a\buildQt                                上级目录，这里当做根目录
-        #D:\a\buildQt\Qt                             Qt目录
-        #D:\a\buildQt\Qt\${{env.QT_VERSION}}         Qt目录源代码和build文件夹存放目录
-        #D:\a\buildQt\Qt\${{env.QT_VERSION}}-shared  Qt安装目录
+        # Directory: D:\a\buildQt\buildQt (当前仓库)
+        # D:\a\buildQt 上级目录，这里当做根目录
+        # D:\a\buildQt\Qt Qt目录
+        # D:\a\buildQt\Qt\${{env.QT_VERSION}} Qt目录源代码和build文件夹存放目录
+        # D:\a\buildQt\Qt\${{env.QT_VERSION}}-shared Qt安装目录
         
         # 创建文件夹
-        cd ..  #Directory: D:\a\buildQt
+        cd ..  # 切到 D:\a\buildQt
         mkdir -p Qt
 
         # 创建文件夹
-        cd Qt   #Directory: D:\a\buildQt\Qt
+        cd Qt   # 切到 D:\a\buildQt\Qt
         mkdir -p ${{env.QT_VERSION}}
         mkdir -p ${{env.QT_VERSION}}-shared
 
-        # 下载源代码并解压，源代码目录D:\a\buildQt\Qt\${{env.QT_VERSION}}\XXX
+        # 下载源代码并解压，源代码目录 D:\a\buildQt\Qt\${{env.QT_VERSION}}\qt-everywhere-src-XXX
         curl -L -o qt-everywhere-src.zip https://download.qt.io/official_releases/qt/${{env.QT_VERSION2}}/${{env.QT_VERSION}}/single/qt-everywhere-src-${{env.QT_VERSION}}.zip
         unzip -q qt-everywhere-src.zip -d ./${{env.QT_VERSION}}
 
-        # 调用编译脚本
+        # 调用编译脚本 (回到仓库目录执行)
         cmd.exe /c "call `"D:\a\buildQt\buildQt\buildQt6\build-Qt6msvc2022_64.cmd`""
 
     # 打包
     - name: Package binaries
+      shell: bash # 建议这里也保持一致
       run: |
-        #ls     #Directory: D:\a\buildQt\buildQt(即仓库目录)
         7z a Qt_${{env.QT_VERSION}}-${{env.FILE_NAME}}.7z ../Qt/${{env.QT_VERSION}}-shared -mx=9
 
     # 上传
