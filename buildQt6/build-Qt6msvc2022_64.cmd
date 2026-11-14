@@ -2,13 +2,16 @@
 @cd /d %~dp0
 
 :: 设置Qt版本
-SET QT_VERSION=6.9.0
+SET QT_VERSION=6.12.0
 
 :: 设置MSVC版本代号
 SET MSVC_VERSION=msvc2022_64
 
 :: 设置MSVC2022环境
 CALL "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
+
+:: 设置Ninja
+SET PATH=D:\a\buildQt\ninja;%PATH%
 
 :: 设置Qt文件夹路径
 SET QT_PATH=D:\a\buildQt\Qt
@@ -30,13 +33,15 @@ rmdir /s /q "%BUILD_DIR%"
 mkdir "%BUILD_DIR%" && cd /d "%BUILD_DIR%"
 
 :: configure
-call %SRC_QT%\configure.bat -shared -debug-and-release -prefix %INSTALL_DIR% -nomake examples -nomake tests -skip qtwebengine -opensource -confirm-license -qt-libpng -qt-libjpeg -qt-zlib -qt-pcre -qt-freetype -schannel -platform win32-msvc
+call %SRC_QT%\configure.bat -shared -debug-and-release -G "Ninja Multi-Config" -prefix %INSTALL_DIR% -nomake examples -nomake tests -skip qtwebengine -opensource -confirm-license -qt-libpng -qt-libjpeg -qt-zlib -qt-pcre -qt-freetype -qt-harfbuzz -qt-webp -qt-tiff -schannel -opengl desktop -platform win32-msvc
 
-:: 编译(不要忘记点)
-cmake --build . --parallel
+:: 分别编译 Release 和 Debug
+cmake --build . --config Release --parallel
+cmake --build . --config Debug --parallel
 
-:: 安装(注：cmake --install .会导致安装不完整)
-ninja install
+:: 分别安装 Release 和 Debug
+cmake --install . --config Release
+cmake --install . --config Debug
 
 ::复制qt.conf
 copy %~dp0\qt.conf %INSTALL_DIR%\bin
