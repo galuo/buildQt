@@ -13,18 +13,18 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    # 检出本仓库
+    # 1. 检出本仓库
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 安装python (Qt构建需要)
+    # 2. 安装 python (Qt构建需要)
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
         architecture: 'x64'
 
-    # 安装msvc环境 (虽然自带，显式调用更稳妥)
+    # 3. 安装 msvc 环境
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
       with:
@@ -33,39 +33,35 @@ jobs:
     - name: Setup vsdevenv
       uses: seanmiddleditch/gha-setup-vsdevenv@master
 
-    # 构建Qt
-    - name: Build Qt
-      shell: bash # 关键：使用 bash 运行 mkdir 和 unzip
+    # 4. 下载并解压 Qt 源代码 (使用 bash)
+    - name: Download and Extract Qt Source
+      shell: bash
       run: |
-        # Directory: D:\a\buildQt\buildQt (当前仓库)
-        # D:\a\buildQt 上级目录，这里当做根目录
-        # D:\a\buildQt\Qt Qt目录
-        # D:\a\buildQt\Qt\${{env.QT_VERSION}} Qt目录源代码和build文件夹存放目录
-        # D:\a\buildQt\Qt\${{env.QT_VERSION}}-shared Qt安装目录
-        
-        # 创建文件夹
-        cd ..  # 切到 D:\a\buildQt
+        # 切换到 D:\a\buildQt 目录
+        cd ..
         mkdir -p Qt
-
-        # 创建文件夹
-        cd Qt   # 切到 D:\a\buildQt\Qt
+        cd Qt
         mkdir -p ${{env.QT_VERSION}}
         mkdir -p ${{env.QT_VERSION}}-shared
 
-        # 下载源代码并解压，源代码目录 D:\a\buildQt\Qt\${{env.QT_VERSION}}\qt-everywhere-src-XXX
+        # 下载源代码并解压到指定目录
         curl -L -o qt-everywhere-src.zip https://download.qt.io/official_releases/qt/${{env.QT_VERSION2}}/${{env.QT_VERSION}}/single/qt-everywhere-src-${{env.QT_VERSION}}.zip
         unzip -q qt-everywhere-src.zip -d ./${{env.QT_VERSION}}
 
-        # 调用编译脚本 (回到仓库目录执行)
-        cmd.exe /c "call `"D:\a\buildQt\buildQt\buildQt6\build-Qt6msvc2022_64.cmd`""
-
-    # 打包
-    - name: Package binaries
-      shell: bash # 建议这里也保持一致
+    # 5. 执行 cmd 脚本进行编译 (使用 cmd，彻底避免引号嵌套问题)
+    - name: Compile Qt
+      shell: cmd
       run: |
+        call "D:\a\buildQt\buildQt\buildQt6\build-Qt6msvc2022_64.cmd"
+
+    # 6. 打包二进制文件
+    - name: Package binaries
+      shell: bash
+      run: |
+        # 注意：此时默认工作目录回到了 D:\a\buildQt\buildQt (仓库根目录)
         7z a Qt_${{env.QT_VERSION}}-${{env.FILE_NAME}}.7z ../Qt/${{env.QT_VERSION}}-shared -mx=9
 
-    # 上传
+    # 7. 上传产物
     - uses: actions/upload-artifact@v4
       with:
         name: Qt_${{env.QT_VERSION}}-${{env.FILE_NAME}}
