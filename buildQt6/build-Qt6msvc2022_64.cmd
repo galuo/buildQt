@@ -36,13 +36,11 @@ mkdir "%BUILD_DIR%" && cd /d "%BUILD_DIR%"
 :: configure (构建 shared 且同时包含 Debug 和 Release)
 call %SRC_QT%\configure.bat -shared -debug-and-release -prefix %INSTALL_DIR% -nomake examples -nomake tests -skip qtwebengine -opensource -confirm-license -qt-libpng -qt-libjpeg -qt-zlib -qt-pcre -qt-freetype -qt-harfbuzz -qt-webp -qt-tiff -schannel -opengl desktop -platform win32-msvc
 
-:: 分别编译 Release 和 Debug
-cmake --build . --config Release --parallel
-cmake --build . --config Debug --parallel
+:: 编译(不要忘记点)
+cmake --build . --parallel
 
-:: 分别安装 Release 和 Debug
-cmake --install . --config Release
-cmake --install . --config Debug
+:: 安装(注：cmake --install .会导致安装不完整)
+ninja install
 
 ::复制qt.conf
 copy %~dp0\qt.conf %INSTALL_DIR%\bin

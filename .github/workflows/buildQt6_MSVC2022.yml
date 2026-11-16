@@ -10,7 +10,7 @@ env:
 
 jobs:
   windows_msvc_shared_debug_release:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
     # 1. 检出本仓库
